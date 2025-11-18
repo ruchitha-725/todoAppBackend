@@ -1,10 +1,11 @@
-import { addTask, getTasks } from "./todoControllers";
-import { addTaskService, getTasksService } from "../services/todoService";
+import { addTask, getTasks, updateTask } from "./todoControllers";
+import { addTaskService, getTasksService, updateTaskService } from "../services/todoService";
 import { Request, Response } from "express";
 
 jest.mock("../services/todoService", () => ({
     addTaskService: jest.fn(),
-    getTasksService: jest.fn()
+    getTasksService: jest.fn(),
+    updateTaskService: jest.fn(),
 }));
 
 const mockAddTaskService = addTaskService as jest.Mock;
@@ -95,6 +96,55 @@ describe("getTasks Controller", () => {
         mockGetTasksService.mockRejectedValue(new Error(errorMessage));
         await getTasks(mockRequest as Request, mockResponse as Response);
         expect(mockGetTasksService).toHaveBeenCalledTimes(1);
+        expect(resStatus).toHaveBeenCalledWith(500);
+        expect(resJson).toHaveBeenCalledWith({ error: errorMessage });
+    });
+});
+
+const mockUpdateTaskService = updateTaskService as jest.Mock;
+describe("updateTask Controller", () => {
+    let mockRequest: Partial<Request>;
+    let mockResponse: Partial<Response>;
+    let resStatus: jest.Mock;
+    let resJson: jest.Mock;
+    const testId = "id123";
+
+    beforeEach(() => {
+        jest.clearAllMocks();
+        resStatus = jest.fn().mockReturnThis();
+        resJson = jest.fn().mockReturnThis();
+        mockRequest = {
+            params: { id: testId },
+            body: { description: "Reading story books" }
+        };
+        mockResponse = { status: resStatus, json: resJson };
+    });
+    it("should return 200 OK status and the updated task on success", async () => {
+        const updatedTask = { id: testId, description: "Reading story books" };
+        mockUpdateTaskService.mockResolvedValue(updatedTask);
+        await updateTask(mockRequest as Request, mockResponse as Response);
+        expect(mockUpdateTaskService).toHaveBeenCalledWith(testId, mockRequest.body);
+        expect(resStatus).toHaveBeenCalledWith(200);
+        expect(resJson).toHaveBeenCalledWith(updatedTask);
+    });
+    it("should return 400 Bad Request for a validation error", async () => {
+        const errorMessage = "Invalid fields provided for update: name.";
+        mockUpdateTaskService.mockRejectedValue(new Error(errorMessage));
+        await updateTask(mockRequest as Request, mockResponse as Response);
+        expect(resStatus).toHaveBeenCalledWith(400);
+        expect(resJson).toHaveBeenCalledWith({ error: errorMessage });
+    });
+    it("should return 404 Not Found if the task does not exist", async () => {
+        const errorMessage = 'Task with ID "id123" does not exist.';
+        mockUpdateTaskService.mockRejectedValue(new Error(errorMessage));
+        await updateTask(mockRequest as Request, mockResponse as Response);
+        expect(resStatus).toHaveBeenCalledWith(404);
+        expect(resJson).toHaveBeenCalledWith({ error: errorMessage });
+    });
+    it("should return 500 Internal Server Error if the service fails", async () => {
+        const errorMessage = "Failed to update task in the database.";
+        mockUpdateTaskService.mockRejectedValue(new Error(errorMessage));
+        await updateTask(mockRequest as Request, mockResponse as Response);
         expect(resStatus).toHaveBeenCalledWith(500);
         expect(resJson).toHaveBeenCalledWith({ error: errorMessage });
     });
