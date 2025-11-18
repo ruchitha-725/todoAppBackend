@@ -16,4 +16,8 @@ module.exports = {
   },
   moduleFileExtensions: ["ts", "js", "json", "node"],
   moduleDirectories: ["node_modules", "<rootDir>/src"], 
+  testPathIgnorePatterns: [
+    "/node_modules/",
+    "src/config/firebase.test.ts" 
+  ],
 };
