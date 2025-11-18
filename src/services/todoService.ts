@@ -55,3 +55,38 @@ export const getTasksService = async (): Promise<Task[]> => {
     throw new Error("Failed to retrieve tasks from the database.");
   }
 };
+export const updateTaskService = async (id: string, data: Partial<Task>): Promise<Partial<Task>> => {
+  if (!id || typeof id !== 'string') {
+    throw new Error("Valid task ID is required for updating.");
+  }
+  const allowedUpdateFields = ['description', 'status', 'priority', 'deadline'];
+  const updateKeys = Object.keys(data);
+  const invalidFields = updateKeys.filter(key => !allowedUpdateFields.includes(key));
+  if (invalidFields.length > 0) {
+    throw new Error(`Invalid fields provided for update: ${invalidFields.join(', ')}.`);
+  }
+  if (updateKeys.length === 0) {
+    throw new Error("No valid fields provided for update.");
+  }
+  if (data.status && !Object.values(TaskStatus).includes(data.status)) {
+    throw new Error(`Status must be one of ${Object.values(TaskStatus).join(', ')}.`);
+  }
+  if (data.priority && !Object.values(TaskPriority).includes(data.priority)) {
+    throw new Error(`Priority must be one of ${Object.values(TaskPriority).join(', ')}.`);
+  }
+  try {
+    const docRef = db.collection(TASK_COLLECTION).doc(id);
+    const docSnapshot = await docRef.get();
+    if (!docSnapshot.exists) {
+      throw new Error(`Task with ID "${id}" does not exist.`);
+    }
+    await docRef.update(data);
+    return { id, ...data };
+  } catch (error) {
+    if ((error as Error).message.includes("does not exist.")) {
+      throw error;
+    }
+    throw new Error("Failed to update task in the database.");
+  }
+};
+
