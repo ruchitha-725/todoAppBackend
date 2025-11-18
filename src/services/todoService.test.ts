@@ -1,4 +1,4 @@
-import { addTaskService, getTasksService, updateTaskService } from "./todoService";
+import { addTaskService, getTasksService, updateTaskService, deleteTaskService } from "./todoService";
 import { TaskStatus, TaskPriority } from "../types/task";
 import { db } from "../config/firebase";
 
@@ -156,3 +156,51 @@ describe("updateTaskService", () => {
     expect(mockUpdate).toHaveBeenCalledTimes(1);
   });
 });
+describe("deleteTaskService", () => {
+  let mockDelete: jest.Mock;
+  let mockGet: jest.Mock;
+  let mockDoc: jest.Mock;
+  const validTaskId = "id123";
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockDelete = jest.fn().mockResolvedValue(undefined);
+    mockGet = jest.fn().mockResolvedValue({ exists: true });
+    mockDoc = jest.fn().mockReturnThis();
+    (db.collection as jest.Mock).mockImplementation(() => ({
+      doc: mockDoc,
+    }));
+    mockDoc.mockReturnValue({
+      get: mockGet,
+      delete: mockDelete,
+    });
+  });
+  it("should successfully delete a task if it exists", async () => {
+    const result = await deleteTaskService(validTaskId);
+    expect(db.collection).toHaveBeenCalledWith("tasks");
+    expect(mockDoc).toHaveBeenCalledWith(validTaskId);
+    expect(mockGet).toHaveBeenCalledTimes(1);
+    expect(mockDelete).toHaveBeenCalledTimes(1);
+    expect(result).toEqual({ success: true });
+  });
+  it("should throw an error if the task ID is missing or invalid", async () => {
+    await expect(deleteTaskService("")).rejects.toThrow(
+      "Valid task ID is required for deletion."
+    );
+    expect(db.collection).not.toHaveBeenCalled();
+    expect(mockDelete).not.toHaveBeenCalled();
+  });
+  it("should throw a Task does not exist error if the task is not found", async () => {
+    mockGet.mockResolvedValue({ exists: false });
+    await expect(deleteTaskService(validTaskId)).rejects.toThrow(`Task with ID "${validTaskId}" does not exist.`);
+    expect(mockGet).toHaveBeenCalledTimes(1);
+    expect(mockDelete).not.toHaveBeenCalled();
+  });
+  it("should throw a database error if the delete operation fails unexpectedly", async () => {
+    mockGet.mockResolvedValue({ exists: true });
+    mockDelete.mockRejectedValue(new Error("Firestore connection dropped"));
+    await expect(deleteTaskService(validTaskId)).rejects.toThrow("Failed to delete task from the database.");
+    expect(mockGet).toHaveBeenCalledTimes(1);
+    expect(mockDelete).toHaveBeenCalledTimes(1);
+  });
+});
+
