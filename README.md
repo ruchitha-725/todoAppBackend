@@ -43,6 +43,12 @@
 - Handled errors and debug and solved the errors.
 - Validated endpoints using postman.
 
+### Feature: Update-Task
+- Added functionality to update specific tasks stored in the database using id in endpoint.
+- Added tests for service, controller and route files.
+- Implemented validations for the updateTask.
+- Handled errors and debug and solved the errors.
+- Validated endpoints using postman.
 
 ## Setup & Run 🛠
 
