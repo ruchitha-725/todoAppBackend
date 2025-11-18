@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { addTaskService } from "../services/todoService";
+import { addTaskService, getTasksService } from "../services/todoService";
 
 const getErrorMessage = (error: unknown): string => {
     if (error instanceof Error) {
@@ -28,5 +28,13 @@ export const addTask = async (req: Request, res: Response) => {
         else {
             res.status(500).json({ error: "An unexpected error occurred." });
         }
+    }
+};
+export const getTasks = async (req: Request, res: Response) => {
+    try {
+        const tasks = await getTasksService();
+        res.status(200).json(tasks);
+    } catch (error) {
+        res.status(500).json({ error: getErrorMessage(error) });
     }
 };
