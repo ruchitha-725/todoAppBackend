@@ -1,15 +1,20 @@
 import request from 'supertest';
 import express, { Express } from 'express';
 import todoRoutes from './todoRoutes';
-import { addTask } from '../controllers/todoControllers';
+import { addTask, getTasks } from '../controllers/todoControllers';
 
 jest.mock('../controllers/todoControllers', () => ({
   addTask: jest.fn((req, res) => {
     res.status(200).json({ status: 'controller function called' });
   }),
+  getTasks: jest.fn((req, res) => {
+    res.status(200).json({ status: 'getTasks controller called' });
+  }),
 }));
 
 const mockedAddTask = addTask as jest.Mock;
+const mockedGetTasks = getTasks as jest.Mock;
+
 const app: Express = express();
 app.use(express.json());
 app.use('/tasks', todoRoutes);
@@ -35,5 +40,13 @@ describe('todoRoutes', () => {
       .get('/tasks/route')
       .expect(404);
     expect(mockedAddTask).not.toHaveBeenCalled();
+  });
+  it('should call the getTasks controller function when GET is requested', async () => {
+    const response = await request(app)
+      .get('/tasks/all')
+      .expect(200);
+    expect(mockedGetTasks).toHaveBeenCalledTimes(1);
+    expect(mockedAddTask).not.toHaveBeenCalled();
+    expect(response.body).toEqual({ status: 'getTasks controller called' });
   });
 });
