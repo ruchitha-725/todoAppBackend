@@ -1,7 +1,7 @@
 import request from 'supertest';
 import express, { Express } from 'express';
 import todoRoutes from './todoRoutes';
-import { addTask, getTasks } from '../controllers/todoControllers';
+import { addTask, getTasks, updateTask } from '../controllers/todoControllers';
 
 jest.mock('../controllers/todoControllers', () => ({
   addTask: jest.fn((req, res) => {
@@ -10,10 +10,14 @@ jest.mock('../controllers/todoControllers', () => ({
   getTasks: jest.fn((req, res) => {
     res.status(200).json({ status: 'getTasks controller called' });
   }),
+  updateTask: jest.fn((req, res) => {
+    res.status(200).json({ status: 'updateTask controller called', id: req.params.id })
+  })
 }));
 
 const mockedAddTask = addTask as jest.Mock;
 const mockedGetTasks = getTasks as jest.Mock;
+const mockedUpdateTask = updateTask as jest.Mock;
 
 const app: Express = express();
 app.use(express.json());
@@ -48,5 +52,20 @@ describe('todoRoutes', () => {
     expect(mockedGetTasks).toHaveBeenCalledTimes(1);
     expect(mockedAddTask).not.toHaveBeenCalled();
     expect(response.body).toEqual({ status: 'getTasks controller called' });
+  });
+  it('should call the updateTask controller function when PUT is requested', async () => {
+    const testId = 'id123';
+    const testBody = { description: "Reading horror story book" };
+    const response = await request(app)
+      .put(`/tasks/update/${testId}`)
+      .send(testBody)
+      .expect(200);
+    expect(mockedUpdateTask).toHaveBeenCalledTimes(1);
+    expect(mockedAddTask).not.toHaveBeenCalled();
+    expect(mockedGetTasks).not.toHaveBeenCalled();
+    expect(response.body).toEqual({ status: 'updateTask controller called', id: testId });
+    const reqArg = mockedUpdateTask.mock.calls[0][0];
+    expect(reqArg.params.id).toBe(testId);
+    expect(reqArg.body).toEqual(testBody);
   });
 });

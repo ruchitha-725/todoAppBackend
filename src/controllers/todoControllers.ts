@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { addTaskService, getTasksService } from "../services/todoService";
+import { addTaskService, getTasksService, updateTaskService } from "../services/todoService";
 
 const getErrorMessage = (error: unknown): string => {
     if (error instanceof Error) {
@@ -36,5 +36,26 @@ export const getTasks = async (req: Request, res: Response) => {
         res.status(200).json(tasks);
     } catch (error) {
         res.status(500).json({ error: getErrorMessage(error) });
+    }
+};
+export const updateTask = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    try {
+        const updated = await updateTaskService(id, req.body);
+        res.status(200).json(updated);
+    } catch (error) {
+        const errorMessage = getErrorMessage(error);
+        if (errorMessage.startsWith("Valid task ID is required") ||
+            errorMessage.includes("Invalid fields provided") ||
+            errorMessage.includes("No valid fields provided") ||
+            errorMessage.includes("must be one of")) {
+            res.status(400).json({ error: errorMessage });
+        }
+        else if (errorMessage.includes("does not exist")) {
+            res.status(404).json({ error: errorMessage });
+        }
+        else {
+            res.status(500).json({ error: "Failed to update task in the database." });
+        }
     }
 };
