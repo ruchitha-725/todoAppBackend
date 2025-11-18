@@ -34,6 +34,15 @@
 - Implemented add task required fields i.e name,description,status,priority and deadline.
 - Implemented Validations for all fileds.
 - Added tests for services,controllers and route files.
+- Validated endpoints using postman.
+
+### Feature: Get-Tasks
+- Added functionality to retrieve all tasks stored in the database
+- Added tests for service, controller and route files.
+- Implemented validations for the getTasks.
+- Handled errors and debug and solved the errors.
+- Validated endpoints using postman.
+
 
 ## Setup & Run 🛠
 
