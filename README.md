@@ -30,6 +30,10 @@
 
 ## Features 🔐
 
+### Feature:Add-task
+- Implemented add task required fields i.e name,description,status,priority and deadline.
+- Implemented Validations for all fileds.
+- Added tests for services,controllers and route files.
 
 ## Setup & Run 🛠
 
