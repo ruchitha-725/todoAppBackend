@@ -50,6 +50,13 @@
 - Handled errors and debug and solved the errors.
 - Validated endpoints using postman.
 
+### Feature: Delete-Task
+- Added functionality to delete specific task stored in the database using id in endpoint.
+- Added tests for service, controller and route files.
+- Implemented validations for the deleteTask.
+- Handled errors and debug and solved the errors.
+- Validated endpoints using postman.
+
 ## Setup & Run 🛠
 
 1. **Clone the repository**:

@@ -89,4 +89,24 @@ export const updateTaskService = async (id: string, data: Partial<Task>): Promis
     throw new Error("Failed to update task in the database.");
   }
 };
+export const deleteTaskService = async (id: string): Promise<{ success: boolean }> => {
+  if (!id || typeof id !== 'string' || id.trim().length === 0) {
+    throw new Error("Valid task ID is required for deletion.");
+  }
+  try {
+    const docRef = db.collection(TASK_COLLECTION).doc(id);
+    const docSnapshot = await docRef.get();
+    if (!docSnapshot.exists) {
+      throw new Error(`Task with ID "${id}" does not exist.`);
+    }
+    await docRef.delete();
+    return { success: true };
+  } catch (error) {
+    if ((error as Error).message.includes("does not exist")) {
+      throw error;
+    }
+    throw new Error("Failed to delete task from the database.");
+  }
+};
+
 
