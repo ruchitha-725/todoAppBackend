@@ -1,15 +1,15 @@
-import { addTask, getTasks, updateTask } from "./todoControllers";
-import { addTaskService, getTasksService, updateTaskService } from "../services/todoService";
+import { addTask, getTasks, updateTask, deleteTask } from "./todoControllers";
+import { addTaskService, deleteTaskService, getTasksService, updateTaskService } from "../services/todoService";
 import { Request, Response } from "express";
 
 jest.mock("../services/todoService", () => ({
     addTaskService: jest.fn(),
     getTasksService: jest.fn(),
     updateTaskService: jest.fn(),
+    deleteTaskService: jest.fn()
 }));
 
 const mockAddTaskService = addTaskService as jest.Mock;
-
 describe("addTask Controller", () => {
     let mockRequest: Partial<Request>;
     let mockResponse: Partial<Response>;
@@ -28,7 +28,6 @@ describe("addTask Controller", () => {
             json: resJson,
         };
     });
-
     it("should return 201 Created status on success", async () => {
         const createdTask = { id: "id123", name: "Yoga" };
         mockAddTaskService.mockResolvedValue(createdTask);
@@ -36,7 +35,6 @@ describe("addTask Controller", () => {
         expect(resStatus).toHaveBeenCalledWith(201);
         expect(resJson).toHaveBeenCalledWith(createdTask);
     });
-
     it("should return 400 Bad Request for a validation error", async () => {
         const errorMessage = "Missing required fields.";
         mockAddTaskService.mockRejectedValue(new Error(errorMessage));
@@ -100,7 +98,6 @@ describe("getTasks Controller", () => {
         expect(resJson).toHaveBeenCalledWith({ error: errorMessage });
     });
 });
-
 const mockUpdateTaskService = updateTaskService as jest.Mock;
 describe("updateTask Controller", () => {
     let mockRequest: Partial<Request>;
@@ -108,7 +105,6 @@ describe("updateTask Controller", () => {
     let resStatus: jest.Mock;
     let resJson: jest.Mock;
     const testId = "id123";
-
     beforeEach(() => {
         jest.clearAllMocks();
         resStatus = jest.fn().mockReturnThis();
@@ -149,3 +145,50 @@ describe("updateTask Controller", () => {
         expect(resJson).toHaveBeenCalledWith({ error: errorMessage });
     });
 });
+const mockDeleteTaskService = deleteTaskService as jest.Mock;
+describe("deleteTask Controller", () => {
+    let mockRequest: Partial<Request>;
+    let mockResponse: Partial<Response>;
+    let resStatus: jest.Mock;
+    let resJson: jest.Mock;
+    const testId = "id123";
+    beforeEach(() => {
+        jest.clearAllMocks();
+        resStatus = jest.fn().mockReturnThis();
+        resJson = jest.fn().mockReturnThis();
+        mockRequest = {
+            params: { id: testId },
+        };
+        mockResponse = { status: resStatus, json: resJson };
+    });
+    it("should return 200 OK status and success message on successful deletion", async () => {
+        mockDeleteTaskService.mockResolvedValue({ success: true });
+        await deleteTask(mockRequest as Request, mockResponse as Response);
+        expect(mockDeleteTaskService).toHaveBeenCalledWith(testId);
+        expect(resStatus).toHaveBeenCalledWith(200);
+        expect(resJson).toHaveBeenCalledWith({ message: "Task deleted" });
+    });
+    it("should return 400 Bad Request for an invalid ID validation error", async () => {
+        const errorMessage = "Valid task ID is required for deletion.";
+        mockRequest.params = { id: "" };
+        mockDeleteTaskService.mockRejectedValue(new Error(errorMessage));
+        await deleteTask(mockRequest as Request, mockResponse as Response);
+        expect(resStatus).toHaveBeenCalledWith(400);
+        expect(resJson).toHaveBeenCalledWith({ error: errorMessage });
+    });
+    it("should return 404 Not Found if the task does not exist", async () => {
+        const errorMessage = 'Task with ID "id123" does not exist.';
+        mockDeleteTaskService.mockRejectedValue(new Error(errorMessage));
+        await deleteTask(mockRequest as Request, mockResponse as Response);
+        expect(resStatus).toHaveBeenCalledWith(404);
+        expect(resJson).toHaveBeenCalledWith({ error: errorMessage });
+    });
+    it("should return 500 Internal Server Error if the service fails", async () => {
+        const errorMessage = "Failed to delete task from the database.";
+        mockDeleteTaskService.mockRejectedValue(new Error(errorMessage));
+        await deleteTask(mockRequest as Request, mockResponse as Response);
+        expect(resStatus).toHaveBeenCalledWith(500);
+        expect(resJson).toHaveBeenCalledWith({ error: errorMessage });
+    });
+});
+
